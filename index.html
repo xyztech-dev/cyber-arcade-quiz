@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XyzTech - CyberArcade Gaming Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #070913;
+            --surface: #101528;
+            --surface-hover: #19223f;
+            --primary: #00f0ff;
+            --secondary: #7928ca;
+            --accent: #ff007f;
+            --success: #00ff66;
+            --error: #ff3366;
+            --text-main: #f0f4f8;
+            --text-muted: #8a9bb8;
+            --border: rgba(0, 240, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(121, 40, 202, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.15) 0%, transparent 40%);
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.1);
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        h1, h2, h3, .logo {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        /* Category Screen */
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .category-btn {
+            background: var(--surface-hover);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 20px;
+            color: var(--text-main);
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .category-btn span {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        /* Quiz HUD */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .timer-badge {
+            background: rgba(255, 51, 102, 0.15);
+            border: 1px solid var(--error);
+            color: var(--error);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .timer-badge.warning {
+            animation: pulse 0.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: var(--surface-hover);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--secondary);
+            background: rgba(121, 40, 202, 0.15);
+        }
+
+        .option-btn.correct {
+            background: rgba(0, 255, 102, 0.15) !important;
+            border-color: var(--success) !important;
+            color: var(--success) !important;
+        }
+
+        .option-btn.incorrect {
+            background: rgba(255, 51, 102, 0.15) !important;
+            border-color: var(--error) !important;
+            color: var(--error) !important;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(0, 240, 255, 0.05);
+            border-left: 4px solid var(--primary);
+            font-size: 1.05rem;
+            display: none;
+        }
+
+        .next-btn {
+            margin-top: 25px;
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: none;
+        }
+
+        .next-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Results Screen */
+        .results-screen {
+            text-align: center;
+            display: none;
+        }
+
+        .score-circle {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 4px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 25px auto;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        .score-val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .results-msg {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .restart-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">XYZTECH // CYBER_ARCADE</div>
+            <div id="category-title" style="font-weight: 600; color: var(--text-muted);"></div>
+        </div>
+
+        <!-- SCREEN 1: CATEGORY SELECTION -->
+        <div id="screen-category">
+            <h2 style="font-size: 1.6rem; margin-bottom: 10px;">SELECT PROTOCOL</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Choose your domain to launch the diagnostic assessment.</p>
+            
+            <div class="category-grid" id="category-list">
+                <!-- Dynamically injected categories -->
+            </div>
+        </div>
+
+        <!-- SCREEN 2: ACTIVE QUIZ -->
+        <div id="screen-quiz" class="hidden">
+            <div class="hud">
+                <span id="question-progress">Q: 1 / 5</span>
+                <div class="timer-badge" id="timer">15s</div>
+            </div>
+
+            <div class="question-text" id="question-text">Loading question...</div>
+
+            <div class="options-list" id="options-container">
+                <!-- Options injected here -->
+            </div>
+
+            <div class="explanation-box" id="explanation-box">
+                <strong>Analysis:</strong> <span id="explanation-text"></span>
+            </div>
+
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()">NEXT PROTOCOL >></button>
+        </div>
+
+        <!-- SCREEN 3: RESULTS -->
+        <div id="screen-results" class="results-screen">
+            <h2 style="font-size: 1.8rem; margin-bottom: 10px;">MISSION COMPLETE</h2>
+            <div class="score-circle">
+                <div class="score-val" id="final-score">0/5</div>
+            </div>
+            <div class="results-msg" id="results-msg">Evaluating tactical performance...</div>
+            <button class="restart-btn" onclick="resetQuiz()">RE-ENGAGE CATEGORIES</button>
+        </div>
+    </div>
+
+    <script>
+        // Database of Dynamic Categories & Questions
+        const quizData = {
+            gaming: {
+                name: "Gaming & Esports",
+                questions: [
+                    {
+                        q: "In mobile shooter battle royales like Blood Strike or PUBG, what does 'hip fire' mean?",
+                        options: ["Firing without entering ADS (Aim Down Sights)", "Firing while crouching", "Firing while sliding at high speed", "Using a hip-mounted tactical laser"],
+                        answer: 0,
+                        explanation: "Hip firing allows immediate shooting without zooming in, trading precision for raw movement speed."
+                    },
+                    {
+                        q: "Which high-speed vehicle is iconic for high-tier racing runs in Asphalt Nitro?",
+                        options: ["Pagani Zonda Cinque", "Toyota Corolla GT", "Delivery Van", "Standard Go-Kart"],
+                        answer: 0,
+                        explanation: "The Pagani Zonda Cinque is renowned for its explosive top speed and aggressive corner drift handling."
+                    },
+                    {
+                        q: "What does 'FPS' stand for in gaming performance benchmarks?",
+                        options: ["Fast Processing Speed", "Frames Per Second", "First Person Shooter", "File Packet System"],
+                        answer: 1,
+                        explanation: "FPS measures how many distinct consecutive images an engine renders each second to ensure smooth gameplay."
+                    },
+                    {
+                        q: "In gaming hardware, what is a 3-finger claw grip typically used for?",
+                        options: ["Typing faster code", "Simultaneous movement, aiming, and firing on touchscreens", "Cooling down battery heat", "Connecting Bluetooth controllers"],
+                        answer: 1,
+                        explanation: "A claw layout lets mobile gamers perform complex split-second maneuvers without lifting thumbs off view controls."
+                    }
+                ]
+            },
+            tech: {
+                name: "Web Dev & Tech",
+                questions: [
+                    {
+                        q: "Which HTML tag is used to define an internal style sheet or styling rules?",
+                        options: ["<script>", "<style>", "<css>", "<design>"],
+                        answer: 1,
+                        explanation: "The <style> tag is utilized inside HTML documents to embed CSS declarations."
+                    },
+                    {
+                        q: "What is GitHub Pages primarily used for?",
+                        options: ["Hosting static live web projects directly from a repository", "Compiling native Android APK files", "Mining cryptocurrency tokens", "Managing server-side SQL databases"],
+                        answer: 0,
+                        explanation: "GitHub Pages turns code repositories into live accessible websites instantly for free."
+                    },
+                    {
+                        q: "In JavaScript, how do you declare a constant variable that cannot be reassigned?",
+                        options: ["variable x = 10;", "let x = 10;", "const x = 10;", "static x = 10;"],
+                        answer: 2,
+                        explanation: "The 'const' keyword creates read-only constant reference bindings in modern ES6+ JavaScript."
+                    },
+                    {
+                        q: "Which Linux environment tool is commonly used to run Node.js packages on Android?",
+                        options: ["Termux", "Windows PowerShell", "Xcode", "Finder"],
+                        answer: 0,
+                        explanation: "Termux provides a powerful terminal emulation environment on mobile devices for running git, node, and scripts."
+                    }
+                ]
+            },
+            anime: {
+                name: "Anime & Lore",
+                questions: [
+                    {
+                        q: "In Jujutsu Kaisen, what unique innate technique does Satoru Gojo command?",
+                        options: ["Blood Manipulation", "Limitless & Infinity", "Straw Doll Technique", "Puppet Manipulation"],
+                        answer: 1,
+                        explanation: "Limitless manipulates space at an atomic level, making it impossible for attacks to physically touch him."
+                    },
+                    {
+                        q: "What breathing style does Tanjiro Kamado learn initially before mastering Hinokami Kagura?",
+                        options: ["Water Breathing", "Flame Breathing", "Wind Breathing", "Thunder Breathing"],
+                        answer: 0,
+                        explanation: "Tanjiro trains under Sakonji Urokodaki to master Water Breathing before uncovering Sun Breathing roots."
+                    },
+                    {
+                        q: "What Egyptian deity empowers Black Adam in comic lore?",
+                        options: ["Shu, Heru, Amon, Zehuti, Aton, Mehen", "Anubis and Osiris only", "Ra and Bastet", "Sobek alone"],
+                        answer: 0,
+                        explanation: "His powers derive from the acronym SHAZAM: Shu's stamina, Heru's speed, Amon's strength, Zehuti's wisdom, Aton's power, and Mehen's courage."
+                    }
+                ]
+            }
+        };
+
+        let currentCategoryKey = '';
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let timer = null;
+        let timeLeft = 15;
+        let isAnswered = false;
+
+        // Initialize Categories on Load
+        function initCategories() {
+            const listEl = document.getElementById('category-list');
+            listEl.innerHTML = '';
+
+            for (const [key, cat] of Object.entries(quizData)) {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.innerHTML = `${cat.name} <span>${cat.questions.length} Protocols</span>`;
+                btn.onclick = () => startQuiz(key);
+                listEl.appendChild(btn);
+            }
+        }
+
+        function startQuiz(categoryKey) {
+            currentCategoryKey = categoryKey;
+            // Copy and shuffle/slice questions dynamically
+            currentQuestions = [...quizData[categoryKey].questions];
+            currentIndex = 0;
+            score = 0;
+
+            document.getElementById('category-title').innerText = quizData[categoryKey].name.toUpperCase();
+            document.getElementById('screen-category').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.remove('hidden');
+
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            clearInterval(timer);
+            timeLeft = 15;
+
+            const q = currentQuestions[currentIndex];
+            document.getElementById('question-progress').innerText = `PROTOCOL: ${currentIndex + 1} / ${currentQuestions.length}`;
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('explanation-box').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+
+            const optsContainer = document.getElementById('options-container');
+            optsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => selectAnswer(idx);
+                optsContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            const timerEl = document.getElementById('timer');
+            timerEl.innerText = `${timeLeft}s`;
+            timerEl.classList.remove('warning');
+
+            timer = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = `${timeLeft}s`;
+                if (timeLeft <= 5) {
+                    timerEl.classList.add('warning');
+                }
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeOutAnswer();
+                }
+            }, 1000);
+        }
+
+        function selectAnswer(selectedIndex) {
+            if (isAnswered) return;
+            isAnswered = true;
+            clearInterval(timer);
+
+            const q = currentQuestions[currentIndex];
+            const buttons = document.querySelectorAll('.option-btn');
+
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === q.answer) {
+                    btn.classList.add('correct');
+                } else if (idx === selectedIndex) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (selectedIndex === q.answer) {
+                score++;
+            }
+
+            showExplanation(q.explanation);
+        }
+
+        function timeOutAnswer() {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const q = currentQuestions[currentIndex];
+            const buttons = document.querySelectorAll('.option-btn');
+
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === q.answer) {
+                    btn.classList.add('correct');
+                }
+            });
+
+            showExplanation("Time expired! " + q.explanation);
+        }
+
+        function showExplanation(text) {
+            document.getElementById('explanation-text').innerText = text;
+            document.getElementById('explanation-box').style.display = 'block';
+            
+            const nextBtn = document.getElementById('next-btn');
+            if (currentIndex === currentQuestions.length - 1) {
+                nextBtn.innerText = "VIEW FINAL REPORT";
+            } else {
+                nextBtn.innerText = "NEXT PROTOCOL >>";
+            }
+            nextBtn.style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < currentQuestions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-results').classList.remove('hidden');
+
+            const percentage = Math.round((score / currentQuestions.length) * 100);
+            document.getElementById('final-score').innerText = `${score}/${currentQuestions.length}`;
+
+            const msgEl = document.getElementById('results-msg');
+            if (percentage === 100) {
+                msgEl.innerText = "RANK S+: Legendary Mastery! Flawless execution.";
+            } else if (percentage >= 70) {
+                msgEl.innerText = "RANK A: Outstanding tactical proficiency!";
+            } else if (percentage >= 40) {
+                msgEl.innerText = "RANK B: Moderate performance. Recommended review.";
+            } else {
+                msgEl.innerText = "RANK C: Calibration failed. Re-engage protocol.";
+            }
+        }
+
+        function resetQuiz() {
+            document.getElementById('screen-results').classList.add('hidden');
+            document.getElementById('screen-category').classList.remove('hidden');
+            initCategories();
+        }
+
+        // Initialize on page load
+        window.onload = initCategories;
+    </script>
+</body>
+</html>
